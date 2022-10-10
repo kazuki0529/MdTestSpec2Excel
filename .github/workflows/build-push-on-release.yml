@@ -17,12 +17,12 @@ jobs:
       - name: Push to Docker Hub(specified version)
         uses: docker/build-push-action@v3
         with:
-          context: ./docker
+          file: ./docker/Dockerfile
           push: true
           tags: kazuki0529/md-test-spec2excel:${{ github.event.release.tag_name }}
       - name: Push to Docker Hub(latest)
         uses: docker/build-push-action@v3
         with:
-          context: ./docker
+          file: ./docker/Dockerfile
           push: true
           tags: kazuki0529/md-test-spec2excel:latest
