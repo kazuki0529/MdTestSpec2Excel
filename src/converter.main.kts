@@ -5,6 +5,7 @@
 @file:DependsOn("com.vladsch.flexmark:flexmark-all:0.64.0")
 
 import com.vladsch.flexmark.ast.BulletList
+import com.vladsch.flexmark.ast.FencedCodeBlock
 import com.vladsch.flexmark.ast.Heading
 import com.vladsch.flexmark.ast.OrderedList
 import com.vladsch.flexmark.parser.Parser
@@ -201,7 +202,7 @@ class SpecLoader(specFile: File) {
      */
     fun notifyExpected(value: String) {
         this.expected = value.trim().split("\n").map {
-            "・" + it.replace("""^\* \[ \] """.toRegex(), "")
+            "・" + it.replace("""^[\*\+\-] \[ \] """.toRegex(), "")
         }
     }
 
@@ -211,9 +212,7 @@ class SpecLoader(specFile: File) {
      * @param value 備考
      */
     fun notifyNotes(value: String) {
-        this.notes = value.trim().split("\n").map {
-            "・" + it.replace("""^- """.toRegex(), "")
-        }
+        this.notes = value.split("\n").filter { !it.startsWith("```") }
     }
 }
 
@@ -268,18 +267,15 @@ list.forEach {
             }
 
             // 箇条書き
-            // 確認項目・備考
+            // 確認項目
             is BulletList -> {
-                when (current.openingMarker) {
-                    // 確認項目
-                    '*' -> {
-                        loader.notifyExpected(current.chars.toString())
-                    }
-                    // 備考
-                    '-' -> {
-                        loader.notifyNotes(current.chars.toString())
-                    }
-                }
+                loader.notifyExpected(current.chars.toString())
+            }
+
+            // コードブロック
+            // 備考
+            is FencedCodeBlock -> {
+                loader.notifyNotes(current.chars.toString())
             }
         }
 
