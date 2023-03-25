@@ -13,13 +13,53 @@ import com.vladsch.flexmark.util.ast.Document
 import com.vladsch.flexmark.util.ast.Node
 import com.vladsch.flexmark.util.data.MutableDataSet
 import org.jetbrains.kotlin.com.google.common.io.Files
+import org.jxls.builder.xls.XlsCommentAreaBuilder
+import org.jxls.command.AbstractCommand
+import org.jxls.common.CellRef
 import org.jxls.common.Context
+import org.jxls.common.Size
+import org.jxls.transform.poi.PoiTransformer
 import org.jxls.util.JxlsHelper
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
+
+/**
+ * 自動高さと自動幅の設定を行う Jxls コマンド
+ */
+class AutoRowHeightCommand : AbstractCommand() {
+    /**
+     * コマンド名を返す
+     *
+     * @return コマンド名
+     */
+    override fun getName(): String {
+        return "autoRowHeight"
+    }
+
+    /**
+     * 自動高さ調整の設定
+     *
+     * @param cellRef セルの参照
+     * @param context コンテキスト
+     * @return サイズ
+     */
+    override fun applyAt(cellRef: CellRef?, context: Context?): Size {
+        val area = this.areaList[0]
+        val size = area.applyAt(cellRef, context)
+
+        if (cellRef != null) {
+            val transformer = area.transformer as PoiTransformer
+            transformer.workbook.getSheet(cellRef.sheetName).getRow(cellRef.row).apply {
+                height = -1
+            }
+        }
+
+        return size
+    }
+}
 
 /**
  * テスト仕様エンティティ
@@ -296,6 +336,7 @@ val context = Context().apply {
         this.putVar(it.fileName, it)
     }
 }
+XlsCommentAreaBuilder.addCommandMapping("autoRowHeight", AutoRowHeightCommand::class.java)
 JxlsHelper.getInstance().processTemplate(FileInputStream(template), FileOutputStream(out), context)
 
 println("######### Finished #########")
